@@ -17,37 +17,7 @@
   <body>
     <h1>NL Design System architectuur afbeeldingen</h1>
     <script type="module" src="./src/archimate-img.ts"></script>
-    <script type="module">
-      const showAllFigures = (url) =>
-        fetch(url).then((response) => {
-          response.text().then((svg) => {
-            const doc = new DOMParser().parseFromString(svg, "application/xml");
-            const diagrams = Array.from(doc.querySelectorAll("element"))
-              .filter(
-                (el) =>
-                  el.getAttribute("xsi:type") ===
-                  "archimate:ArchimateDiagramModel"
-              )
-              .map((el) => ({
-                element: el,
-                name: el.getAttribute("name"),
-                id: el.getAttribute("id"),
-              }))
-              .forEach(({ id, name }) => {
-                const section = document.createElement("section");
-                const heading = section.appendChild(
-                  document.createElement("h2")
-                );
-                heading.textContent = name;
-                const archimateImg = document.createElement("archimate-img");
-                archimateImg.setAttribute("src", `${url}#${id}`);
-                section.appendChild(archimateImg);
-                document.body.appendChild(section);
-              });
-          });
-        });
-
-      showAllFigures("./nl-design-system.archimate");
-    </script>
+    <script type="module" src="./src/table-of-contents.ts"></script>
+    <script type="module" src="./src/index-page.ts"></script>
   </body>
 </html>
