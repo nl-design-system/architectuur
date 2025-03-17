@@ -45,12 +45,7 @@ const categories: { [index: string]: string[] } = {
     "archimate:Stakeholder",
     "archimate:Value",
   ],
-  ["strategy"]: [
-    "archimate:Capability",
-    "archimate:CourseOfAction",
-    "archimate:Resource",
-    "archimate:ValueStream",
-  ],
+  ["strategy"]: ["archimate:Capability", "archimate:CourseOfAction", "archimate:Resource", "archimate:ValueStream"],
   ["technology"]: [
     "archimate:Artifact",
     "archimate:CommunicationNetwork",
@@ -251,12 +246,7 @@ interface AnchorCoords {
   priority: number;
 }
 
-const getAnchorCoordinates = ({
-  width,
-  height,
-  x,
-  y,
-}: RectCoords): AnchorCoords[] => {
+const getAnchorCoordinates = ({ width, height, x, y }: RectCoords): AnchorCoords[] => {
   return [
     // top left
     { priority: 0.8, x, y },
@@ -278,16 +268,11 @@ const getAnchorCoordinates = ({
 };
 
 const getClosestAnchors = (anchor1: RectCoords, anchor2: RectCoords) => {
-  const lines = cartesian([
-    getAnchorCoordinates(anchor1),
-    getAnchorCoordinates(anchor2),
-  ]);
+  const lines = cartesian([getAnchorCoordinates(anchor1), getAnchorCoordinates(anchor2)]);
 
   const measuredLines = lines
     .map(([from, to]): [AnchorCoords, AnchorCoords, number] => {
-      const distance = Math.sqrt(
-        Math.pow(from.x - to.x, 2) + Math.pow(from.y - to.y, 2)
-      );
+      const distance = Math.sqrt(Math.pow(from.x - to.x, 2) + Math.pow(from.y - to.y, 2));
       return [from, to, distance / from.priority / to.priority];
     })
     .sort(([, , distanceA], [, , distanceB]) => distanceA - distanceB);
@@ -296,8 +281,7 @@ const getClosestAnchors = (anchor1: RectCoords, anchor2: RectCoords) => {
   return [shortestLine[0], shortestLine[1]];
 };
 
-const isElement = (node: Node | null): node is Element =>
-  !!node && node.nodeType === 1;
+const isElement = (node: Node | null): node is Element => !!node && node.nodeType === 1;
 
 const getChildElementsByName = (node: Node, localName: string): Element[] => {
   let child = node.firstChild;
@@ -312,15 +296,9 @@ const getChildElementsByName = (node: Node, localName: string): Element[] => {
   return nodes;
 };
 
-const testRequiredAttribute = (
-  elementName: string,
-  attributeName: string,
-  value: unknown
-): value is string => {
+const testRequiredAttribute = (elementName: string, attributeName: string, value: unknown): value is string => {
   if (typeof value !== "string") {
-    throw new Error(
-      `Missing "${attributeName}" attribute on element "${elementName}".`
-    );
+    throw new Error(`Missing "${attributeName}" attribute on element "${elementName}".`);
   }
   return true;
 };
@@ -374,6 +352,11 @@ const parseChild = (doc: Document, child: Element): ChildData | null => {
     ? {
         text: targetEl.getAttribute("name") || "",
         type: targetEl.getAttribute("xsi:type") || "",
+      }
+    : !targetId
+    ? {
+        text: child.querySelector("content")?.textContent || "",
+        type: child.getAttribute("xsi:type"),
       }
     : {
         text: "",
@@ -435,10 +418,7 @@ const parseElement = (element: Element): ElementData | null => {
   const type = element.getAttribute("xsi:type");
   const name = element.getAttribute("name");
 
-  if (
-    !testRequiredAttribute("element", "id", id) ||
-    !testRequiredAttribute("element", "type", type)
-  ) {
+  if (!testRequiredAttribute("element", "id", id) || !testRequiredAttribute("element", "type", type)) {
     return null;
   }
 
@@ -452,9 +432,7 @@ const parseElement = (element: Element): ElementData | null => {
 const parseElements = (parent: Element | Document): ElementData[] =>
   (parent ? Array.from(parent.querySelectorAll("element")) : [])
     .map((x) => parseElement(x))
-    .filter(
-      <ElementData>(x: ElementData | null): x is ElementData => x !== null
-    );
+    .filter(<ElementData>(x: ElementData | null): x is ElementData => x !== null);
 
 const createElementMap = (array: ElementData[]): Map<string, ElementData> =>
   array.reduce((map, vakje) => {
@@ -480,7 +458,7 @@ const css = `
   :host {
     display: block;
   }
-  
+
   [role="img"] {
     --archi-white: rgb(255 255 255);
     --archi-yellow: rgb(255 255 189);
@@ -503,15 +481,15 @@ const css = `
     --implementation-background-color: var(--archi-red);
     --strategy-background-color: var(--archi-orange);
   }
-  
+
   .archimate-img__svg {
     color: currentColor;
     pointer-events: none;
     width: var(--my-icon-size, auto);
     height: var(--my-icon-size, auto);
   }
-  
-  
+
+
   .archimate-img__element {
     border: 1px solid black;
     box-sizing: border-box;
@@ -527,8 +505,9 @@ const css = `
     word-break: break-word;
     justify-content: space-between;
     text-wrap-style: pretty;
+    white-space: pre-line;
   }
-  
+
   .archimate-img__element-icon {
     display: block;
     width: 16px;
@@ -536,56 +515,56 @@ const css = `
     min-width: 16px;
     min-height: 16px;
   }
-  
+
   .archimate-img__element-icon svg {
     width: 100%;
     height: 100%;
   }
-  
+
   .archimate-img__element--location {
     background-color: var(--location-background-color);
   }
-  
+
   .archimate-img__element--business {
     background-color: var(--business-background-color);
   }
-  
+
   .archimate-img__element--resource {
     background-color: var(--resource-background-color);
   }
-  
+
   .archimate-img__element--application {
     background-color: var(--application-background-color);
   }
-  
+
   .archimate-img__element--technology {
     background-color: var(--technology-background-color);
   }
-  
+
   .archimate-img__element--implementation {
     background-color: var(--implementation-background-color);
   }
-  
+
   .archimate-img__element--strategy {
     background-color: var(--strategy-background-color);
   }
-  
+
   .archimate-img__element--physical {
     background-color: var(--physical-background-color);
   }
-  
+
   .archimate-img__element--motivation {
     background-color: var(--motivation-background-color);
   }
-  
+
   .archimate-img__element--note {
     background-color: var(--note-background-color);
   }
-  
+
   .archimate-img__element--group {
     background-color: var(--group-background-color);
   }
-  
+
   .archimate-img__connection--flowrelationship {
     stroke-dasharray: 0.2em;
   }
@@ -636,9 +615,7 @@ class ArchimateImgElement extends HTMLElement {
 
         let vakjes: ChildData[] = (x ? getChildElementsByName(x, "child") : [])
           .map((x) => parseChild(doc, x))
-          .filter(
-            <ChildData>(x: ChildData | null): x is ChildData => x !== null
-          );
+          .filter(<ChildData>(x: ChildData | null): x is ChildData => x !== null);
 
         vakjes = vakjes.map((vakje) => ({
           ...vakje,
@@ -648,13 +625,9 @@ class ArchimateImgElement extends HTMLElement {
 
         // const vakjesMap = createChildMap(vakjes);
 
-        const connections: Connection[] = (
-          x ? getChildElementsByName(x, "child") : []
-        )
+        const connections: Connection[] = (x ? getChildElementsByName(x, "child") : [])
           .map((child) => {
-            return (
-              child ? getChildElementsByName(child, "sourceConnection") : []
-            )
+            return (child ? getChildElementsByName(child, "sourceConnection") : [])
               .filter((sourceConnectionEl) => {
                 const type = sourceConnectionEl.getAttribute("xsi:type");
                 return type === "archimate:Connection";
@@ -662,26 +635,12 @@ class ArchimateImgElement extends HTMLElement {
               .map((sourceConnectionEl): Connection | null => {
                 const source = sourceConnectionEl.getAttribute("source");
                 const target = sourceConnectionEl.getAttribute("target");
-                const archimateRelationship = sourceConnectionEl.getAttribute(
-                  "archimateRelationship"
-                );
+                const archimateRelationship = sourceConnectionEl.getAttribute("archimateRelationship");
 
                 if (
-                  !testRequiredAttribute(
-                    "sourceConnection",
-                    "source",
-                    source
-                  ) ||
-                  !testRequiredAttribute(
-                    "sourceConnection",
-                    "target",
-                    target
-                  ) ||
-                  !testRequiredAttribute(
-                    "sourceConnection",
-                    "archimateRelationship",
-                    archimateRelationship
-                  )
+                  !testRequiredAttribute("sourceConnection", "source", source) ||
+                  !testRequiredAttribute("sourceConnection", "target", target) ||
+                  !testRequiredAttribute("sourceConnection", "archimateRelationship", archimateRelationship)
                 ) {
                   return null;
                 }
@@ -708,10 +667,7 @@ class ArchimateImgElement extends HTMLElement {
                   );
                 }
 
-                const [sourceAnchor, targetAnchor] = getClosestAnchors(
-                  sourceVakje,
-                  targetVakje
-                );
+                const [sourceAnchor, targetAnchor] = getClosestAnchors(sourceVakje, targetVakje);
 
                 return {
                   type: relationship.type,
@@ -721,10 +677,7 @@ class ArchimateImgElement extends HTMLElement {
                   y2: targetAnchor.y,
                 };
               })
-              .filter(
-                <Connection>(x: Connection | null): x is Connection =>
-                  x !== null
-              );
+              .filter(<Connection>(x: Connection | null): x is Connection => x !== null);
           })
           .reduce((a, b) => [...a, ...b], []);
 
@@ -732,18 +685,12 @@ class ArchimateImgElement extends HTMLElement {
         container.style.cssText = `position: relative; width: ${xMax}px; height: ${yMax}px; content-visibility: auto; contain: size; contain-intrinsic-height: ${yMax}px; contain-intrinsic-width: ${xMax}px;`;
         container.setAttribute("role", "img");
 
-        const svgEl = container.appendChild(
-          document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        );
+        const svgEl = container.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "svg"));
         svgEl.setAttribute("viewBox", `0 0 ${xMax} ${yMax}`);
         svgEl.classList.add("archimate-img__svg");
 
-        const svgDefs = svgEl.appendChild(
-          document.createElementNS("http://www.w3.org/2000/svg", "defs")
-        );
-        const svgMarker = svgDefs.appendChild(
-          document.createElementNS("http://www.w3.org/2000/svg", "marker")
-        );
+        const svgDefs = svgEl.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "defs"));
+        const svgMarker = svgDefs.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "marker"));
         svgMarker.setAttribute("id", "archimate-arrow");
         svgMarker.setAttribute("viewBox", "0 0 10 10");
         svgMarker.setAttribute("refX", "5");
@@ -753,9 +700,7 @@ class ArchimateImgElement extends HTMLElement {
         svgMarker.setAttribute("orient", "auto-start-reverse");
         svgMarker.setAttribute("fill", "currentColor");
 
-        const svgMarkerPath = svgMarker.appendChild(
-          document.createElementNS("http://www.w3.org/2000/svg", "path")
-        );
+        const svgMarkerPath = svgMarker.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "path"));
         svgMarkerPath.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
 
         connections
@@ -765,9 +710,7 @@ class ArchimateImgElement extends HTMLElement {
               connection.type !== "archimate:CompositionRelationship"
           )
           .forEach((connection) => {
-            const svgLineEl = svgEl.appendChild(
-              document.createElementNS("http://www.w3.org/2000/svg", "line")
-            );
+            const svgLineEl = svgEl.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "line"));
             svgLineEl.setAttribute("x1", String(connection.x1));
             svgLineEl.setAttribute("y1", String(connection.y1));
             svgLineEl.setAttribute("x2", String(connection.x2));
@@ -778,32 +721,23 @@ class ArchimateImgElement extends HTMLElement {
             if (connection.type) {
               svgLineEl.classList.add("archimate-img__connection");
               svgLineEl.classList.add(
-                `archimate-img__connection--${slugify(
-                  connection.type.replace(/^archimate:/, "")
-                )}`
+                `archimate-img__connection--${slugify(connection.type.replace(/^archimate:/, ""))}`
               );
             }
           });
 
         const renderChildren = (vakjes: ChildData[], zIndex = 1) => {
           vakjes.forEach(({ width, children, height, text, type, x, y }) => {
-            const [category] = Object.entries(categories).find(([, value]) =>
-              value.includes(type || "")
-            ) || ["", []];
+            const [category] = Object.entries(categories).find(([, value]) => value.includes(type || "")) || ["", []];
 
-            const svgRect = svgEl.appendChild(
-              document.createElementNS("http://www.w3.org/2000/svg", "rect")
-            );
+            const svgRect = svgEl.appendChild(document.createElementNS("http://www.w3.org/2000/svg", "rect"));
             svgRect.setAttribute("x", String(x));
             svgRect.setAttribute("y", String(y));
             svgRect.setAttribute("width", String(width));
             svgRect.setAttribute("height", String(height));
-            svgRect.setAttribute("fill", "red");
+            svgRect.setAttribute("fill", "none");
             svgRect.classList.add("archimate-img__element-shape");
-            svgRect.classList.toggle(
-              `archimate-img__element-shape--${category}`,
-              !!category
-            );
+            svgRect.classList.toggle(`archimate-img__element-shape--${category}`, !!category);
 
             const vakje = container.appendChild(document.createElement("div"));
             const label = container.appendChild(document.createElement("div"));
@@ -812,10 +746,7 @@ class ArchimateImgElement extends HTMLElement {
             vakje.appendChild(label);
 
             vakje.classList.add("archimate-img__element");
-            vakje.classList.toggle(
-              `archimate-img__element--${category}`,
-              !!category
-            );
+            vakje.classList.toggle(`archimate-img__element--${category}`, !!category);
             // vakje.classList.add('archimate-img__element--resource');
             vakje.style.cssText = `top: ${y}px; left: ${x}px; width: ${width}px; height: ${height}px;`;
             vakje.style.zIndex = String(zIndex);
