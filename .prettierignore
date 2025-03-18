@@ -1,0 +1,30 @@
+# Ignore 3rd party files
+node_modules
+SearchBar
+
+# Ignore minified files
+*.min.js
+
+# Ignore generated files
+coverage
+dist
+build
+tmp
+.docusaurus
+CHANGELOG.md
+package-lock.json
+pnpm-lock.yaml
+.angular
+.nx
+
+# Ignore generated files from Stencil
+components/components.d.ts
+packages/web-component-library-angular/src/directives
+packages/web-component-library-react/src/components.ts
+packages/web-component-library-react/src/react-component-lib/
+packages/web-component-library-stencil/loader
+packages/web-component-library-stencil/www
+packages/web-component-library-stencil/src/components/generated/
+packages/web-component-library-stencil/src/components.d.ts
+packages/web-component-library-vue/src/components.ts
+packages/web-component-library-vue/src/vue-component-lib/
