@@ -1,1 +1,1 @@
-export { default } from "@nl-design-system/eslint-config";
+export { default } from '@nl-design-system/eslint-config';
