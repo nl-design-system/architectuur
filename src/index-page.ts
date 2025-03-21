@@ -1,4 +1,4 @@
-const showAllFigures = (url) =>
+const showAllFigures = (url: string) =>
   fetch(url).then((response) => {
     response.text().then((svg) => {
       const doc = new DOMParser().parseFromString(svg, 'application/xml');

@@ -356,7 +356,7 @@ const parseChild = (doc: Document, child: Element): ChildData | null => {
     : !targetId
       ? {
           text: child.querySelector('content')?.textContent || '',
-          type: child.getAttribute('xsi:type'),
+          type: child.getAttribute('xsi:type') || '',
         }
       : {
           text: '',
@@ -575,6 +575,7 @@ const sheet = new CSSStyleSheet();
 sheet.replaceSync(css);
 
 class ArchimateImgElement extends HTMLElement {
+  static cache = new Map<string, Promise<string>>();
   connectedCallback() {
     const shadowRoot = this.attachShadow({ mode: 'closed' });
 
@@ -588,197 +589,199 @@ class ArchimateImgElement extends HTMLElement {
 
     const url = new URL(src, location.href);
     const idRef = url.hash.substring(1);
+    const urlString = `${url.origin}${url.pathname}`; // Exclude the hash fragment
+    const request = ArchimateImgElement.cache.get(urlString) ?? fetch(urlString).then((response) => response.text());
 
-    fetch(url).then((response) => {
-      response.text().then((svg) => {
-        const doc = new DOMParser().parseFromString(svg, 'application/xml');
-        const x = doc.getElementById(idRef);
+    if (!ArchimateImgElement.cache.has(urlString)) {
+      ArchimateImgElement.cache.set(urlString, request);
+    }
 
-        if (!isElement(x)) {
-          return;
-        }
+    request.then((svg) => {
+      const doc = new DOMParser().parseFromString(svg, 'application/xml');
+      this.renderDocument(doc, idRef, shadowRoot);
+    });
+  }
 
-        let allVakjes: ChildData[] = parseChildElements(doc, x);
+  renderDocument(doc: Document, idRef: string, shadowRoot: ShadowRoot) {
+    const x = doc.getElementById(idRef);
 
-        const allElements = parseElements(doc);
-        const allElementsMap = createElementMap(allElements);
+    if (!isElement(x)) {
+      return;
+    }
 
-        const { xMax, xMin, yMax, yMin } = getRectBounds(allVakjes);
+    let allVakjes: ChildData[] = parseChildElements(doc, x);
 
-        allVakjes = allVakjes.map((vakje) => ({
-          ...vakje,
-          x: vakje.x - xMin,
-          y: vakje.y - yMin,
-        }));
+    const allElements = parseElements(doc);
+    const allElementsMap = createElementMap(allElements);
 
-        const allVakjesMap = createChildMap(allVakjes);
+    const { xMax, xMin, yMax, yMin } = getRectBounds(allVakjes);
 
-        let vakjes: ChildData[] = (x ? getChildElementsByName(x, 'child') : [])
-          .map((x) => parseChild(doc, x))
-          .filter(<ChildData>(x: ChildData | null): x is ChildData => x !== null);
+    allVakjes = allVakjes.map((vakje) => ({
+      ...vakje,
+      x: vakje.x - xMin,
+      y: vakje.y - yMin,
+    }));
 
-        vakjes = vakjes.map((vakje) => ({
-          ...vakje,
-          x: vakje.x - xMin,
-          y: vakje.y - yMin,
-        }));
+    const allVakjesMap = createChildMap(allVakjes);
 
-        // const vakjesMap = createChildMap(vakjes);
+    let vakjes: ChildData[] = (x ? getChildElementsByName(x, 'child') : [])
+      .map((x) => parseChild(doc, x))
+      .filter(<ChildData>(x: ChildData | null): x is ChildData => x !== null);
 
-        const connections: Connection[] = (x ? getChildElementsByName(x, 'child') : [])
-          .map((child) => {
-            return (child ? getChildElementsByName(child, 'sourceConnection') : [])
-              .filter((sourceConnectionEl) => {
-                const type = sourceConnectionEl.getAttribute('xsi:type');
-                return type === 'archimate:Connection';
-              })
-              .map((sourceConnectionEl): Connection | null => {
-                const source = sourceConnectionEl.getAttribute('source');
-                const target = sourceConnectionEl.getAttribute('target');
-                const archimateRelationship = sourceConnectionEl.getAttribute('archimateRelationship');
+    vakjes = vakjes.map((vakje) => ({
+      ...vakje,
+      x: vakje.x - xMin,
+      y: vakje.y - yMin,
+    }));
 
-                if (
-                  !testRequiredAttribute('sourceConnection', 'source', source) ||
-                  !testRequiredAttribute('sourceConnection', 'target', target) ||
-                  !testRequiredAttribute('sourceConnection', 'archimateRelationship', archimateRelationship)
-                ) {
-                  return null;
-                }
+    // const vakjesMap = createChildMap(vakjes);
 
-                const sourceVakje = allVakjesMap.get(source);
-                const targetVakje = allVakjesMap.get(target);
-                const relationship = allElementsMap.get(archimateRelationship);
-
-                if (!sourceVakje) {
-                  throw new Error(
-                    `Cannot find element with ID "${source}", as defined in "sourceConnection" "source".`,
-                  );
-                }
-
-                if (!targetVakje) {
-                  throw new Error(
-                    `Cannot find element with ID "${target}", as defined in "sourceConnection" "target".`,
-                  );
-                }
-
-                if (!relationship) {
-                  throw new Error(
-                    `Cannot find element with ID "${archimateRelationship}", as defined in "sourceConnection" "archimateRelationship".`,
-                  );
-                }
-
-                const [sourceAnchor, targetAnchor] = getClosestAnchors(sourceVakje, targetVakje);
-
-                return {
-                  type: relationship.type,
-                  x1: sourceAnchor.x,
-                  x2: targetAnchor.x,
-                  y1: sourceAnchor.y,
-                  y2: targetAnchor.y,
-                };
-              })
-              .filter(<Connection>(x: Connection | null): x is Connection => x !== null);
+    const connections: Connection[] = (x ? getChildElementsByName(x, 'child') : [])
+      .map((child) => {
+        return (child ? getChildElementsByName(child, 'sourceConnection') : [])
+          .filter((sourceConnectionEl) => {
+            const type = sourceConnectionEl.getAttribute('xsi:type');
+            return type === 'archimate:Connection';
           })
-          .reduce((a, b) => [...a, ...b], []);
+          .map((sourceConnectionEl): Connection | null => {
+            const source = sourceConnectionEl.getAttribute('source');
+            const target = sourceConnectionEl.getAttribute('target');
+            const archimateRelationship = sourceConnectionEl.getAttribute('archimateRelationship');
 
-        const container = shadowRoot.appendChild(document.createElement('div'));
-        container.style.cssText = `position: relative; width: ${xMax}px; height: ${yMax}px; content-visibility: auto; contain: size; contain-intrinsic-height: ${yMax}px; contain-intrinsic-width: ${xMax}px;`;
-        container.setAttribute('role', 'img');
+            if (
+              !testRequiredAttribute('sourceConnection', 'source', source) ||
+              !testRequiredAttribute('sourceConnection', 'target', target) ||
+              !testRequiredAttribute('sourceConnection', 'archimateRelationship', archimateRelationship)
+            ) {
+              return null;
+            }
 
-        const svgEl = container.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'svg'));
-        svgEl.setAttribute('viewBox', `0 0 ${xMax} ${yMax}`);
-        svgEl.classList.add('archimate-img__svg');
+            const sourceVakje = allVakjesMap.get(source);
+            const targetVakje = allVakjesMap.get(target);
+            const relationship = allElementsMap.get(archimateRelationship);
 
-        const svgDefs = svgEl.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'defs'));
-        const svgMarker = svgDefs.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'marker'));
-        svgMarker.setAttribute('id', 'archimate-arrow');
-        svgMarker.setAttribute('viewBox', '0 0 10 10');
-        svgMarker.setAttribute('refX', '5');
-        svgMarker.setAttribute('refY', '5');
-        svgMarker.setAttribute('markerWidth', '6');
-        svgMarker.setAttribute('markerHeight', '6');
-        svgMarker.setAttribute('orient', 'auto-start-reverse');
-        svgMarker.setAttribute('fill', 'currentColor');
+            if (!sourceVakje) {
+              throw new Error(`Cannot find element with ID "${source}", as defined in "sourceConnection" "source".`);
+            }
 
-        const svgMarkerPath = svgMarker.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'path'));
-        svgMarkerPath.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
+            if (!targetVakje) {
+              throw new Error(`Cannot find element with ID "${target}", as defined in "sourceConnection" "target".`);
+            }
 
-        connections
-          .filter(
-            (connection) =>
-              // TODO: Only exclude `CompositionRelationship` when the `target` visually contains the `source`
-              connection.type !== 'archimate:CompositionRelationship',
-          )
-          .forEach((connection) => {
-            const svgLineEl = svgEl.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'line'));
-            svgLineEl.setAttribute('x1', String(connection.x1));
-            svgLineEl.setAttribute('y1', String(connection.y1));
-            svgLineEl.setAttribute('x2', String(connection.x2));
-            svgLineEl.setAttribute('y2', String(connection.y2));
-            svgLineEl.setAttribute('stroke', 'currentColor');
-            svgLineEl.setAttribute('marker-end', 'url(#archimate-arrow)');
-
-            if (connection.type) {
-              svgLineEl.classList.add('archimate-img__connection');
-              svgLineEl.classList.add(
-                `archimate-img__connection--${slugify(connection.type.replace(/^archimate:/, ''))}`,
+            if (!relationship) {
+              throw new Error(
+                `Cannot find element with ID "${archimateRelationship}", as defined in "sourceConnection" "archimateRelationship".`,
               );
             }
-          });
 
-        const renderChildren = (vakjes: ChildData[], zIndex = 1) => {
-          vakjes.forEach(({ width, children, height, text, type, x, y }) => {
-            const [category] = Object.entries(categories).find(([, value]) => value.includes(type || '')) || ['', []];
+            const [sourceAnchor, targetAnchor] = getClosestAnchors(sourceVakje, targetVakje);
 
-            const svgRect = svgEl.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'rect'));
-            svgRect.setAttribute('x', String(x));
-            svgRect.setAttribute('y', String(y));
-            svgRect.setAttribute('width', String(width));
-            svgRect.setAttribute('height', String(height));
-            svgRect.setAttribute('fill', 'none');
-            svgRect.classList.add('archimate-img__element-shape');
-            svgRect.classList.toggle(`archimate-img__element-shape--${category}`, !!category);
+            return {
+              type: relationship.type,
+              x1: sourceAnchor.x,
+              x2: targetAnchor.x,
+              y1: sourceAnchor.y,
+              y2: targetAnchor.y,
+            };
+          })
+          .filter(<Connection>(x: Connection | null): x is Connection => x !== null);
+      })
+      .reduce((a, b) => [...a, ...b], []);
 
-            const vakje = container.appendChild(document.createElement('div'));
-            const label = container.appendChild(document.createElement('div'));
-            label.classList.add('archimate-img__element-label');
-            label.textContent = text;
-            vakje.appendChild(label);
+    const container = shadowRoot.appendChild(document.createElement('div'));
+    container.style.cssText = `position: relative; width: ${xMax}px; height: ${yMax}px; content-visibility: auto; contain: size; contain-intrinsic-height: ${yMax}px; contain-intrinsic-width: ${xMax}px;`;
+    container.setAttribute('role', 'img');
 
-            vakje.classList.add('archimate-img__element');
-            vakje.classList.toggle(`archimate-img__element--${category}`, !!category);
-            // vakje.classList.add('archimate-img__element--resource');
-            vakje.style.cssText = `top: ${y}px; left: ${x}px; width: ${width}px; height: ${height}px;`;
-            vakje.style.zIndex = String(zIndex);
+    const svgEl = container.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'svg'));
+    svgEl.setAttribute('viewBox', `0 0 ${xMax} ${yMax}`);
+    svgEl.classList.add('archimate-img__svg');
 
-            const iconUrl = iconMap[type || ''] ?? '';
+    const svgDefs = svgEl.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'defs'));
+    const svgMarker = svgDefs.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'marker'));
+    svgMarker.setAttribute('id', 'archimate-arrow');
+    svgMarker.setAttribute('viewBox', '0 0 10 10');
+    svgMarker.setAttribute('refX', '5');
+    svgMarker.setAttribute('refY', '5');
+    svgMarker.setAttribute('markerWidth', '6');
+    svgMarker.setAttribute('markerHeight', '6');
+    svgMarker.setAttribute('orient', 'auto-start-reverse');
+    svgMarker.setAttribute('fill', 'currentColor');
 
-            if (iconUrl) {
-              // const icon = vakje.appendChild(document.createElement('img'));
-              const icon = vakje.appendChild(document.createElement('span'));
-              icon.innerHTML = iconSvg[iconUrl] || '';
-              icon.classList.add('archimate-img__element-icon');
-              // icon.setAttribute('src', `../../archimate-icons/${iconUrl}`);
-              // icon.setAttribute('width', '16');
-              // icon.setAttribute('height', '16');
-              vakje.appendChild(icon);
-            }
+    const svgMarkerPath = svgMarker.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'path'));
+    svgMarkerPath.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
 
-            // Recursive rendering
-            renderChildren(
-              children.map((vakje) => ({
-                ...vakje,
-                x: vakje.x + x,
-                y: vakje.y + y,
-              })),
-              zIndex + 1,
-            );
-          });
-        };
+    connections
+      .filter(
+        (connection) =>
+          // TODO: Only exclude `CompositionRelationship` when the `target` visually contains the `source`
+          connection.type !== 'archimate:CompositionRelationship',
+      )
+      .forEach((connection) => {
+        const svgLineEl = svgEl.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'line'));
+        svgLineEl.setAttribute('x1', String(connection.x1));
+        svgLineEl.setAttribute('y1', String(connection.y1));
+        svgLineEl.setAttribute('x2', String(connection.x2));
+        svgLineEl.setAttribute('y2', String(connection.y2));
+        svgLineEl.setAttribute('stroke', 'currentColor');
+        svgLineEl.setAttribute('marker-end', 'url(#archimate-arrow)');
 
-        renderChildren(vakjes);
+        if (connection.type) {
+          svgLineEl.classList.add('archimate-img__connection');
+          svgLineEl.classList.add(`archimate-img__connection--${slugify(connection.type.replace(/^archimate:/, ''))}`);
+        }
       });
-    });
+
+    const renderChildren = (vakjes: ChildData[], zIndex = 1) => {
+      vakjes.forEach(({ width, children, height, text, type, x, y }) => {
+        const [category] = Object.entries(categories).find(([, value]) => value.includes(type || '')) || ['', []];
+
+        const svgRect = svgEl.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'rect'));
+        svgRect.setAttribute('x', String(x));
+        svgRect.setAttribute('y', String(y));
+        svgRect.setAttribute('width', String(width));
+        svgRect.setAttribute('height', String(height));
+        svgRect.setAttribute('fill', 'none');
+        svgRect.classList.add('archimate-img__element-shape');
+        svgRect.classList.toggle(`archimate-img__element-shape--${category}`, !!category);
+
+        const vakje = container.appendChild(document.createElement('div'));
+        const label = container.appendChild(document.createElement('div'));
+        label.classList.add('archimate-img__element-label');
+        label.textContent = text;
+        vakje.appendChild(label);
+
+        vakje.classList.add('archimate-img__element');
+        vakje.classList.toggle(`archimate-img__element--${category}`, !!category);
+        // vakje.classList.add('archimate-img__element--resource');
+        vakje.style.cssText = `top: ${y}px; left: ${x}px; width: ${width}px; height: ${height}px;`;
+        vakje.style.zIndex = String(zIndex);
+
+        const iconUrl = iconMap[type || ''] ?? '';
+
+        if (iconUrl) {
+          // const icon = vakje.appendChild(document.createElement('img'));
+          const icon = vakje.appendChild(document.createElement('span'));
+          icon.innerHTML = iconSvg[iconUrl] || '';
+          icon.classList.add('archimate-img__element-icon');
+          // icon.setAttribute('src', `../../archimate-icons/${iconUrl}`);
+          // icon.setAttribute('width', '16');
+          // icon.setAttribute('height', '16');
+          vakje.appendChild(icon);
+        }
+
+        // Recursive rendering
+        renderChildren(
+          children.map((vakje) => ({
+            ...vakje,
+            x: vakje.x + x,
+            y: vakje.y + y,
+          })),
+          zIndex + 1,
+        );
+      });
+    };
+
+    renderChildren(vakjes);
   }
 }
 
