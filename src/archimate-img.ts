@@ -317,8 +317,8 @@ const parseChild = (doc: Document, child: Element): ChildData | null => {
     throw new Error('Element "child" is missing child element "bounds".');
   }
 
-  const x = bounds.getAttribute('x');
-  const y = bounds.getAttribute('y');
+  const x = bounds.getAttribute('x') ?? '0';
+  const y = bounds.getAttribute('y') ?? '0';
   const width = bounds.getAttribute('width');
   const height = bounds.getAttribute('height');
 
