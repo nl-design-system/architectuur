@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@eslint/js": "9.22.0",
-    "@nl-design-system/eslint-config": "1.0.0",
+    "@nl-design-system/eslint-config": "2.1.2",
     "@nl-design-system/tsconfig": "1.0.1",
     "@types/node": "22.13.10",
     "eslint": "9.22.0",
