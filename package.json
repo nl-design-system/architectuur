@@ -38,7 +38,8 @@
     "lint-fix:md": "markdownlint --fix '**/*.md'",
     "prettier": "prettier --list-different --write .",
     "preview": "vite preview",
-    "test": "exit 0"
+    "test": "exit 0",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@eslint/js": "9.22.0",
