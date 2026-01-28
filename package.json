@@ -38,7 +38,10 @@
     "lint-fix:md": "markdownlint --fix '**/*.md'",
     "prettier": "prettier --list-different --write .",
     "preview": "vite preview",
-    "test": "exit 0"
+    "test": "exit 0",
+    "update-patch": "npm-check-updates --configFileName .ncurc.patch.cjs",
+    "update-minor": "npm-check-updates --configFileName .ncurc.minor.cjs",
+    "update-major": "npm-check-updates --configFileName .ncurc.major.cjs"
   },
   "devDependencies": {
     "@eslint/js": "9.22.0",
