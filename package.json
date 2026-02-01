@@ -41,19 +41,19 @@
     "test": "exit 0"
   },
   "devDependencies": {
-    "@eslint/js": "9.22.0",
-    "@nl-design-system/eslint-config": "2.1.2",
-    "@nl-design-system/tsconfig": "1.0.1",
-    "@types/node": "24.10.4",
-    "eslint": "9.22.0",
+    "@eslint/js": "9.39.2",
+    "@nl-design-system/eslint-config": "2.2.0",
+    "@nl-design-system/tsconfig": "1.0.5",
+    "@types/node": "24.10.9",
+    "eslint": "9.39.2",
     "husky": "9.1.7",
     "lint-staged": "15.4.3",
-    "markdownlint-cli": "0.44.0",
-    "npm-package-json-lint": "9.0.0",
-    "prettier": "3.5.3",
+    "markdownlint-cli": "0.47.0",
+    "npm-package-json-lint": "9.1.0",
+    "prettier": "3.8.1",
     "stylelint": "16.15.0",
     "stylelint-order": "6.0.4",
-    "typescript": "5.6.2",
+    "typescript": "5.9.3",
     "vite": "5.4.8"
   }
 }
