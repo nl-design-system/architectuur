@@ -55,9 +55,9 @@
     "npm-check-updates": "19.3.2",
     "npm-package-json-lint": "9.1.0",
     "prettier": "3.8.1",
-    "stylelint": "16.26.1",
+    "stylelint": "17.4.0",
     "stylelint-config-standard-scss": "17.0.0",
-    "stylelint-order": "6.0.4",
+    "stylelint-order": "7.0.1",
     "typescript": "5.9.3",
     "vite": "5.4.21"
   }
