@@ -44,7 +44,7 @@
     "update-major": "npm-check-updates --configFileName .ncurc.major.cjs"
   },
   "devDependencies": {
-    "@eslint/js": "9.39.2",
+    "@eslint/js": "9.39.3",
     "@nl-design-system/eslint-config": "2.2.0",
     "@nl-design-system/tsconfig": "1.0.5",
     "@types/node": "24.12.0",
