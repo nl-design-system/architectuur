@@ -1,3 +1,8 @@
+# See: https://nldesignsystem.nl/codeowners
+
 * @nl-design-system/kernteam-maintainer
 public/ @Robbert
 src/ @Robbert
+
+# Protect this file itself (order matters, keep this line last):
+.github/CODEOWNERS @nl-design-system/kernteam-admin
