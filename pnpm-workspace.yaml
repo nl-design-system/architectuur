@@ -1,0 +1,7 @@
+allowBuilds:
+  esbuild: true
+engineStrict: true
+saveExact: true
+savePrefix: ""
+strictPeerDependencies: false
+autoInstallPeers: false
