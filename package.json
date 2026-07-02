@@ -40,9 +40,9 @@
     "prettier": "prettier --list-different --write .",
     "preview": "vite preview",
     "test": "exit 0",
-    "update-patch": "npm-check-updates --configFileName .ncurc.patch.cjs",
-    "update-minor": "npm-check-updates --configFileName .ncurc.minor.cjs",
-    "update-major": "npm-check-updates --configFileName .ncurc.major.cjs"
+    "update-patch": "npm-check-updates --configFileName .ncurc.patch.mjs",
+    "update-minor": "npm-check-updates --configFileName .ncurc.minor.mjs",
+    "update-major": "npm-check-updates --configFileName .ncurc.major.mjs"
   },
   "devDependencies": {
     "@eslint/js": "9.39.2",
@@ -53,7 +53,7 @@
     "husky": "9.1.7",
     "lint-staged": "16.2.7",
     "markdownlint-cli": "0.48.0",
-    "npm-check-updates": "19.3.2",
+    "npm-check-updates": "22.2.9",
     "npm-package-json-lint": "10.4.0",
     "prettier": "3.8.3",
     "stylelint": "17.12.0",
