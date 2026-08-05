@@ -2,6 +2,6 @@ allowBuilds:
   esbuild: true
 engineStrict: true
 saveExact: true
-savePrefix: ""
+savePrefix: ''
 strictPeerDependencies: false
 autoInstallPeers: false
